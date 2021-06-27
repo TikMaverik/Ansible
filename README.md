@@ -1,1 +1,1 @@
-Dawie is 'n kont
+Dawie is 'n kont period
