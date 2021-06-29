@@ -1,0 +1,50 @@
+---
+# tasks file for MTK_PUSH_MGMT_VLAN
+
+    - name: Collect Host Device PPPOE Interface Details
+      raw: " :put [/interface pppoe-client get 0 interface]; "
+
+      register: cpe_pppoe_interface
+      args: { executable: False }
+      changed_when: False
+
+
+    - name: Collect Host Device PPPOE User Details
+      raw: " :put [/interface pppoe-client get 0 user]; "
+
+      register: cpe_pppoe_user
+      args: { executable: False }
+      changed_when: False
+
+
+
+
+
+    - name: Save Host Device PPPOE User Details
+      set_fact:
+        CPE_PPPOE_USER: "{{ cpe_pppoe_user.stdout_lines[0] | trim }}"
+
+
+    - name: Save Host Device PPPOE Interface Details
+      set_fact:
+        CPE_PPPOE_INTERFACE: "{{ cpe_pppoe_interface.stdout_lines[0] | trim }}"
+
+
+
+
+
+    - name: Remove Old MGMT VLAN and Install New MGMT VLAN Configuration
+      raw:  " :do {/ip address remove [find interface=[/interface vlan get [find vlan-id=99] name]]} on-error={};
+              :do {/interface vlan remove [find name=VLAN-99-MGNT]} on-error={};
+              :do {/interface vlan remove [find name=MGMT]} on-error={};
+              :do {/interface vlan remove [find vlan-id=99]} on-error={};
+              :do {/interface vlan add vlan-id=99 interface={{CPE_PPPOE_INTERFACE}} name=MGMT} on-error={};
+              :do {/ip address add interface=MGMT address={{user.mgmt_ip}}} on-error={}; "
+      when:  user.username  == CPE_PPPOE_USER
+      loop: "{{ hostvars['localhost']['userlist'].list }}"
+      loop_control:
+        loop_var: user
+
+
+      args: { executable: False }
+      changed_when: False
