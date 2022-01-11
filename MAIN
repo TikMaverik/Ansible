@@ -49,4 +49,4 @@
       args: { executable: False }
       changed_when: False
 
-      args:
+      args: yyyy
